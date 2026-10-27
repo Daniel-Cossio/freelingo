@@ -645,6 +645,14 @@ class LLMAdapter:
             )
             self.client = None
             self.model = settings.ANTHROPIC_MODEL
+        elif self.provider in ("antigravity", "agy"):
+            from app.services.llm_antigravity import AntigravityLLMClient
+            self.client = AntigravityLLMClient(
+                binary_path=settings.ANTIGRAVITY_BIN_PATH,
+                model=settings.ANTIGRAVITY_MODEL,
+                effort=settings.ANTIGRAVITY_EFFORT,
+            )
+            self.model = settings.ANTIGRAVITY_MODEL
 
     async def _call_with_retry(
         self, fn, *args, tools_requested: bool = False, max_retries: int = MAX_RETRIES, **kwargs
@@ -750,7 +758,7 @@ class LLMAdapter:
             )
         if self.provider == "anthropic":
             return AnthropicLLMStream(result)
-        if self.provider == "openai":
+        if self.provider in ("openai", "antigravity", "agy"):
             return result
         return LLMStream(result)
 
@@ -763,6 +771,13 @@ class LLMAdapter:
         request_timeout: float = REQUEST_TIMEOUT,
         sdk_max_retries: int | None = None,
     ):
+        if self.provider in ("antigravity", "agy"):
+            return await self.client.do_chat(
+                messages,
+                stream=stream,
+                request_timeout=request_timeout,
+            )
+
         if self.provider == "anthropic":
             if request_timeout != REQUEST_TIMEOUT:
                 return await self._anthropic_chat(

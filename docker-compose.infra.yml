@@ -1,0 +1,37 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: freelingo-postgres
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:5432:5432"
+    environment:
+      POSTGRES_DB: freelingo
+      POSTGRES_USER: freelingo
+      POSTGRES_PASSWORD: freelingodevpassword
+    volumes:
+      - freelingo_pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U freelingo -d freelingo"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: freelingo-redis
+    restart: unless-stopped
+    command: redis-server --requirepass freelingoredispassword
+    ports:
+      - "127.0.0.1:6379:6379"
+    volumes:
+      - freelingo_redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "freelingoredispassword", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+volumes:
+  freelingo_pg_data:
+  freelingo_redis_data:

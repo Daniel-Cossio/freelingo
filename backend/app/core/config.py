@@ -27,6 +27,9 @@ class Settings(BaseSettings):
     ANTHROPIC_MAX_TOKENS: int = 8192
     DEEPSEEK_API_KEY: str = ""
     DEEPSEEK_MODEL: str = "deepseek-chat"
+    ANTIGRAVITY_BIN_PATH: str = "/home/dan/.local/bin/agy"
+    ANTIGRAVITY_MODEL: str = "gemini-3.8-flash-high"
+    ANTIGRAVITY_EFFORT: str = ""
     TTS_PROVIDER: str = "local"  # local | openai
     TTS_BASE_URL: str = "http://kokoro:8880"
     TTS_VOICE: str = "af_heart"
