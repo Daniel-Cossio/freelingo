@@ -1,4 +1,24 @@
-# FreeLingo
+# FreeLingo (Edición Personal con Antigravity CLI)
+
+> **🚀 Adaptado para Dan:** Esta versión de FreeLingo utiliza **Antigravity CLI (`agy`)** como motor de razonamiento (LLM), aprovechando los modelos de Gemini (3.8 Flash, 4 Argon) instalados localmente sin requerir APIs externas de pago.  
+> 📖 **Manual de Integración Completo y Guía de Extensión:** Ver [docs/AGY_INTEGRATION.md](docs/AGY_INTEGRATION.md).
+
+### ⚡ Inicio Rápido
+
+```bash
+# 1. Iniciar toda la suite (Docker + Backend + Frontend):
+./start-all.sh
+
+# 2. Abrir en el navegador:
+# http://localhost:3000
+
+# 3. Detener contenedores Docker al finalizar:
+./stop-all.sh
+```
+
+---
+
+# FreeLingo (Documentación Original)
 
 ![Hosted](https://img.shields.io/badge/hosted%20service-available-green?style=flat-square)
 ![License](https://img.shields.io/badge/license-AGPL%20v3-blue?style=flat-square)
