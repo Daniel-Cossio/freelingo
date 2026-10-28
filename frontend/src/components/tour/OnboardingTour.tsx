@@ -204,7 +204,7 @@ export default function OnboardingTour() {
                 {t(`${current.id}.desc`)}
               </p>
               <AudioPlayer
-                key={`${locale}:${current.id}:${voice ?? ''}`}
+                key={`${locale}:${current.id}`}
                 text={t(`${current.id}.desc`)}
                 voice={voice ?? undefined}
                 audioUrl={audioUrl}

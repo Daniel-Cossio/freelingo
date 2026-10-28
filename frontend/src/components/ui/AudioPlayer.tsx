@@ -92,7 +92,6 @@ export function AudioPlayer({
     resolvedVoice,
     studyPlanId,
     conversationId,
-    sessionVersion,
     releaseAudio,
   ])
 
@@ -188,7 +187,14 @@ export function AudioPlayer({
       audio.onerror = showError
 
       const playStart = performance.now()
-      await audio.play()
+      try {
+        await audio.play()
+      } catch (playErr) {
+        if (playErr instanceof Error && playErr.name === 'AbortError') {
+          return
+        }
+        throw playErr
+      }
       if (controller.signal.aborted || controllerRef.current !== controller)
         return
       if (audioRef.current !== audio) return
@@ -267,6 +273,7 @@ export function AudioPlayer({
   return (
     <button
       type="button"
+      disabled={state === 'loading'}
       onClick={handleClick}
       title={state === 'playing' ? t('stop') : (listenLabel ?? t('listen'))}
       aria-label={
