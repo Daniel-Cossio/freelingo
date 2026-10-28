@@ -399,7 +399,8 @@ async def update_me(
 
 _MAX_AVATAR_BYTES = 2 * 1024 * 1024  # 2 MB
 _ALLOWED_AVATAR_TYPES = {"image/jpeg", "image/png"}
-_AVATARS_DIR = "/app/avatars"
+_DATA_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "data"))
+_AVATARS_DIR = os.environ.get("AVATARS_DIR", "/app/avatars" if os.path.exists("/app/avatars") else os.path.join(_DATA_DIR, "avatars"))
 
 
 def _avatar_path_from_reference(avatar: str | None) -> str | None:

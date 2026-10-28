@@ -25,3 +25,8 @@ dist/
 .coverage.*
 coverage.xml
 htmlcov/
+
+# Local frontend generated
+frontend/AGENTS.md
+frontend/messages/
+

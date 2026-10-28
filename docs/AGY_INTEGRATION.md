@@ -174,15 +174,32 @@ Se ajustó la ruta relativa del script de migraciones:
 
 ---
 
-## 4. Guía de Operación Diaria
+## 4. Guía de Operación Diaria (Comando Global `freelingo`)
 
-### Poner en marcha la plataforma:
+El comando `freelingo` está instalado globalmente en `/home/dan/.local/bin/freelingo` y puede ser ejecutado desde **cualquier directorio**:
+
 ```bash
-cd /home/dan/Documentos/proyectos/freelingo-agy
-./start-all.sh
+# Encender FreeLingo en segundo plano:
+freelingo on
+
+# Consultar el estado en tiempo real (PostgreSQL, Redis, Backend, Frontend, agy):
+freelingo status
+
+# Abrir en el navegador:
+freelingo open    # o visita http://localhost:3000
+
+# Ver logs en vivo:
+freelingo logs backend
+freelingo logs frontend
+
+# Sincronizar con el repositorio oficial:
+freelingo sync
+
+# Apagar FreeLingo y detener contenedores:
+freelingo off
 ```
-* **Acceso web:** [http://localhost:3000](http://localhost:3000)
-* **API Documentación Swagger:** [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
+
+*(También puedes usar los scripts locales `./start-all.sh` y `./stop-all.sh` si prefieres ejecutarlos directamente en el directorio del proyecto).*
 * Para detener todo: presiona `Ctrl + C`.
 
 ### Detener contenedores Docker en segundo plano:

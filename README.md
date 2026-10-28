@@ -16,22 +16,26 @@ Plataforma integral de aprendizaje y autoestudio de idiomas con Inteligencia Art
 
 ---
 
-## 🚀 Inicio Rápido
+## 🚀 Inicio Rápido (Comando Global en PATH)
 
-Para iniciar toda la plataforma (Base de datos PostgreSQL 16 + Redis 7 en Docker + Backend FastAPI + Frontend Next.js 16):
+Puedes controlar FreeLingo desde **cualquier terminal** de tu sistema gracias al comando `freelingo` instalado en `~/.local/bin/freelingo`:
 
 ```bash
-cd /home/dan/Documentos/proyectos/freelingo-agy
-./start-all.sh
-```
+# Iniciar la plataforma en segundo plano (Docker + Backend + Frontend):
+freelingo on
 
-* **Aplicación Web:** [http://localhost:3000](http://localhost:3000)
-* **Documentación API (Swagger):** [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
-* Presiona `Ctrl + C` en la terminal para detener los servidores de forma ordenada.
+# Consultar el estado en vivo de los servicios:
+freelingo status
 
-Para apagar los contenedores auxiliares de Docker cuando no vayas a estudiar:
-```bash
-./stop-all.sh
+# Abrir en el navegador:
+freelingo open    # o visita http://localhost:3000
+
+# Ver logs en tiempo real:
+freelingo logs backend
+freelingo logs frontend
+
+# Detener todos los servicios y contenedores:
+freelingo off
 ```
 
 ---

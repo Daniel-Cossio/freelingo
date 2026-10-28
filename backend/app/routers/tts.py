@@ -25,7 +25,8 @@ from app.services.tts_service import OpenAITTSService
 router = APIRouter(prefix="/api", tags=["tts"])
 logger = get_logger(__name__)
 
-_PREVIEW_DIR = "/app/tts_previews"
+_DATA_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "data"))
+_PREVIEW_DIR = os.environ.get("TTS_PREVIEWS_DIR", "/app/tts_previews" if os.path.exists("/app/tts_previews") else os.path.join(_DATA_DIR, "tts_previews"))
 _OPENAI_VOICES = frozenset(
     {"alloy", "ash", "coral", "echo", "fable", "nova", "onyx", "sage", "shimmer"}
 )

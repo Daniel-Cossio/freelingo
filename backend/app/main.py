@@ -21,8 +21,9 @@ logging.basicConfig(
     datefmt="%Y-%m-%d %H:%M:%S",
 )
 
-_AVATARS_DIR = "/app/avatars"
-_TTS_PREVIEWS_DIR = "/app/tts_previews"
+_DATA_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "data"))
+_AVATARS_DIR = os.environ.get("AVATARS_DIR", "/app/avatars" if os.path.exists("/app/avatars") else os.path.join(_DATA_DIR, "avatars"))
+_TTS_PREVIEWS_DIR = os.environ.get("TTS_PREVIEWS_DIR", "/app/tts_previews" if os.path.exists("/app/tts_previews") else os.path.join(_DATA_DIR, "tts_previews"))
 from app.routers import (
     admin,
     admin_dashboard_banner,
@@ -59,7 +60,10 @@ from app.services.tts_service import KokoroTTSService, OpenAITTSService
 
 
 def _run_migrations() -> None:
-    alembic_cfg = Config("/app/alembic.ini")
+    ini_path = os.environ.get("ALEMBIC_CONFIG", "/app/alembic.ini")
+    if not os.path.exists(ini_path):
+        ini_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "alembic.ini"))
+    alembic_cfg = Config(ini_path)
     command.upgrade(alembic_cfg, "head")
 
 
