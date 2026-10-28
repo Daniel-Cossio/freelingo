@@ -32,6 +32,23 @@ services:
       timeout: 3s
       retries: 5
 
+  kokoro:
+    image: ghcr.io/remsky/kokoro-fastapi-cpu:latest
+    container_name: freelingo-kokoro
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8880:8880"
+
+  whisper:
+    image: onerahmet/openai-whisper-asr-webservice:latest
+    container_name: freelingo-whisper
+    restart: unless-stopped
+    environment:
+      - ASR_MODEL=base
+      - ASR_ENGINE=faster_whisper
+    ports:
+      - "127.0.0.1:9000:9000"
+
 volumes:
   freelingo_pg_data:
   freelingo_redis_data:

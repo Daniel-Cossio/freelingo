@@ -85,6 +85,8 @@ async def lifespan(app: FastAPI):  # noqa: ANN201
     os.makedirs(_AVATARS_DIR, exist_ok=True)
     # Ensure the TTS preview cache directory exists on startup
     os.makedirs(_TTS_PREVIEWS_DIR, exist_ok=True)
+    # Ensure the audio storage directory exists on startup
+    os.makedirs(settings.AUDIO_STORAGE_PATH, exist_ok=True)
 
     if settings.TTS_PROVIDER == "openai":
         if not settings.OPENAI_API_KEY:

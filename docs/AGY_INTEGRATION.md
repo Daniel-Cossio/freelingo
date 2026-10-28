@@ -40,17 +40,23 @@ flowchart TD
         AGYClient["AntigravityLLMClient\n(app/services/llm_antigravity.py)"]
         AGYBin["/home/dan/.local/bin/agy\n-p '<prompt>' --output-format stream-json"]
         GeminiCore["Modelos IA: Gemini 3.8 Flash / Gemini 4"]
+        AudioStorage["Almacenamiento Local de Audio\n(backend/data/audio/)"]
     end
 
     subgraph Docker ["Docker (docker-compose.infra.yml)"]
         PG["PostgreSQL 16\n(127.0.0.1:5432 / 29 tablas)"]
         RD["Redis 7\n(127.0.0.1:6379)"]
+        Kokoro["Kokoro-FastAPI TTS CPU\n(127.0.0.1:8880 / 72 voces)"]
+        Whisper["Faster-Whisper STT CPU\n(127.0.0.1:9000 / Modelo Base)"]
     end
 
     UI <-->|HTTP / WebSocket / SSE| FrontendDev
-    FrontendDev <-->|API Calls| BackendDev
+    FrontendDev <-->|API Calls & Audio Streams| BackendDev
     BackendDev <--> PG
     BackendDev <--> RD
+    BackendDev <--> Kokoro
+    BackendDev <--> Whisper
+    BackendDev <--> AudioStorage
     BackendDev --> LLMAdapter
     LLMAdapter -->|"provider == 'antigravity'"| AGYClient
     AGYClient -->|Subproceso asíncrono| AGYBin
@@ -79,9 +85,11 @@ Es el núcleo de la integración. Implementa:
   * Soporta tanto el modo streaming (`stream=True`) como la recolección completa para generación de JSON (`stream=False`).
 
 #### 2. `docker-compose.infra.yml`
-Define exclusivamente los servicios de datos necesarios para el backend:
+Define exclusivamente los servicios de infraestructura necesarios para el backend:
 * **`postgres`:** Imagen `postgres:16-alpine`, exponiendo el puerto `127.0.0.1:5432`. Almacena datos en el volumen Docker `freelingo_pg_data`.
 * **`redis`:** Imagen `redis:7-alpine`, exponiendo el puerto `127.0.0.1:6379`. Almacena datos en el volumen Docker `freelingo_redis_data`.
+* **`kokoro`:** Imagen `ghcr.io/remsky/kokoro-fastapi-cpu:latest`, exponiendo `127.0.0.1:8880`. Motor de síntesis de voz (TTS) ultrarrápido ejecutado en CPU con 72 paquetes de voces y soporte multiidioma.
+* **`whisper`:** Imagen `onerahmet/openai-whisper-asr-webservice:latest`, exponiendo `127.0.0.1:9000`. Motor de transcripción de voz a texto (STT) optimizado con Faster-Whisper en CPU.
 
 #### 3. `.env` (en raíz) y `backend/.env`
 Archivo de variables de entorno del backend:
@@ -98,6 +106,12 @@ ALLOW_REGISTRATION=true
 FIRST_USER_IS_ADMIN=true
 AVAILABLE_TARGET_LANGUAGES=["en-US","en-GB","fr-FR","de-DE","it-IT","pt-PT","zh-CN","ja-JP"]
 LOG_LEVEL=INFO
+TTS_PROVIDER=local
+TTS_BASE_URL=http://localhost:8880
+TTS_VOICE=af_heart
+STT_PROVIDER=local
+STT_BASE_URL=http://localhost:9000
+AUDIO_STORAGE_PATH=/home/dan/Documentos/proyectos/freelingo-agy/backend/data/audio
 ```
 
 #### 4. `frontend/.env.local`
@@ -106,6 +120,14 @@ Configuración del frontend Next.js:
 BACKEND_URL=http://127.0.0.1:8000
 NEXT_PUBLIC_API_URL=http://localhost:8000
 ```
+
+#### 5. `test_voice_pipeline.py`
+Suite de integración de extremo a extremo que valida:
+* Estado de salud y conectividad de Kokoro TTS (puerto 8880).
+* Estado de salud y conectividad de Faster-Whisper STT (puerto 9000).
+* Síntesis de voz real en MP3.
+* Transcripción de audio con Whisper y coincidencia fonética.
+* Persistencia y caché en disco de audios del tour guiado.
 
 #### 5. `start-all.sh` y `stop-all.sh`
 * `start-all.sh`: Script interactivo ejecutable que:
@@ -160,14 +182,23 @@ Suite de validación que prueba:
   ```
 
 #### 2. `backend/app/core/config.py`
-Se agregaron las 3 variables de configuración con sus valores predeterminados:
-```python
-ANTIGRAVITY_BIN_PATH: str = "/home/dan/.local/bin/agy"
-ANTIGRAVITY_MODEL: str = "gemini-3.8-flash-high"
-ANTIGRAVITY_EFFORT: str = ""
-```
+Se agregaron las variables de configuración con sus valores predeterminados y resolución de rutas dinámicas:
+* **Antigravity CLI:**
+  ```python
+  ANTIGRAVITY_BIN_PATH: str = "/home/dan/.local/bin/agy"
+  ANTIGRAVITY_MODEL: str = "gemini-3.8-flash-high"
+  ANTIGRAVITY_EFFORT: str = ""
+  ```
+* **Fallback local de almacenamiento de audio (`AUDIO_STORAGE_PATH`):**
+  Detecta si `/data` tiene permisos de escritura (entorno Docker); si se ejecuta en el host Linux, utiliza automáticamente `backend/data/audio` para evitar errores de permisos `[Errno 13] Permission denied`.
+* **Servicios locales de voz:**
+  Configuración por defecto hacia `http://localhost:8880` (Kokoro TTS) y `http://localhost:9000` (Whisper STT).
 
-#### 3. `backend/alembic.ini`
+#### 3. `backend/app/services/tts_service.py` y `stt_service.py`
+* **Soporte de redirecciones (`follow_redirects=True`):** Evita que FastAPI lance errores `307 Temporary Redirect` en las verificaciones de salud de los endpoints locales.
+* **Mapeo inteligente de voces en Kokoro (`KokoroTTSService`):** Asigna automáticamente voces nativas de alta fidelidad según el idioma de la lección/usuario (ej. `ef_dora` para español, `af_heart` para inglés estadounidense, `ff_siwis` para francés, `if_sara` para italiano, etc.).
+
+#### 4. `backend/alembic.ini`
 Se ajustó la ruta relativa del script de migraciones:
 * **Antes:** `script_location = /app/alembic` (solo funcionaba dentro del contenedor Docker oficial).
 * **Ahora:** `script_location = %(here)s/alembic` (funciona tanto en local como en Docker).
@@ -182,7 +213,7 @@ El comando `freelingo` está instalado globalmente en `/home/dan/.local/bin/free
 # Encender FreeLingo en segundo plano:
 freelingo on
 
-# Consultar el estado en tiempo real (PostgreSQL, Redis, Backend, Frontend, agy):
+# Consultar el estado en tiempo real (PostgreSQL, Redis, Kokoro, Whisper, Backend, Frontend, agy):
 freelingo status
 
 # Abrir en el navegador:
@@ -191,6 +222,8 @@ freelingo open    # o visita http://localhost:3000
 # Ver logs en vivo:
 freelingo logs backend
 freelingo logs frontend
+freelingo logs tts       # Logs de Kokoro TTS
+freelingo logs whisper   # Logs de Faster-Whisper STT
 
 # Sincronizar con el repositorio oficial:
 freelingo sync

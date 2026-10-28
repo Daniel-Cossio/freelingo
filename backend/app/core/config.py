@@ -1,7 +1,16 @@
+import os
+from pathlib import Path
 from typing import Literal
 
 from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings
+
+_BACKEND_DIR = Path(__file__).resolve().parent.parent.parent
+_DEFAULT_AUDIO_PATH = (
+    "/data/audio"
+    if os.path.exists("/data") and os.access("/data", os.W_OK)
+    else str(_BACKEND_DIR / "data" / "audio")
+)
 
 
 class Settings(BaseSettings):
@@ -31,13 +40,13 @@ class Settings(BaseSettings):
     ANTIGRAVITY_MODEL: str = "gemini-3.8-flash-high"
     ANTIGRAVITY_EFFORT: str = ""
     TTS_PROVIDER: str = "local"  # local | openai
-    TTS_BASE_URL: str = "http://kokoro:8880"
+    TTS_BASE_URL: str = "http://localhost:8880"
     TTS_VOICE: str = "af_heart"
     OPENAI_TTS_MODEL: str = "tts-1"
     OPENAI_TTS_VOICE: str = "nova"
     OPENAI_TTS_SPEED: float = 1.0
     STT_PROVIDER: str = "local"  # local | openai
-    STT_BASE_URL: str = "http://whisper:9000"
+    STT_BASE_URL: str = "http://localhost:9000"
     OPENAI_STT_MODEL: str = "whisper-1"
     RATE_LIMIT_ENABLED: bool = True
     CORS_ORIGINS: list[str] = ["http://localhost:3000"]
@@ -95,8 +104,8 @@ class Settings(BaseSettings):
     SMTP_SSL: bool = False
     APP_BASE_URL: str = "http://localhost:3000"
 
-    # Listening — path where generated MP3 files are stored (Docker volume)
-    AUDIO_STORAGE_PATH: str = "/data/audio"
+    # Listening — path where generated MP3 files are stored (Docker volume or local fallback)
+    AUDIO_STORAGE_PATH: str = _DEFAULT_AUDIO_PATH
 
     # Multi-language — operator-configured subset of supported target languages.
     AVAILABLE_TARGET_LANGUAGES: list[str] = [

@@ -18,7 +18,7 @@ class KokoroTTSService:
 
     async def health(self) -> None:
         """Raise if Kokoro is unreachable."""
-        async with httpx.AsyncClient() as client:
+        async with httpx.AsyncClient(follow_redirects=True) as client:
             r = await client.get(f"{self.base_url}/v1/models", timeout=5.0)
             r.raise_for_status()
 
@@ -26,14 +26,28 @@ class KokoroTTSService:
         self, text: str, voice: str | None = None, language: str | None = None
     ) -> bytes:
         """Call Kokoro-FastAPI and return MP3 audio bytes."""
-        _ = language  # Kokoro handles language via the voice model itself
-        async with httpx.AsyncClient() as client:
+        chosen_voice = voice or self.voice
+        if (not voice or voice == self.voice) and language:
+            lang_prefix = language.lower().split("-")[0].split("_")[0]
+            kokoro_lang_voices = {
+                "es": "ef_dora",
+                "fr": "ff_siwis",
+                "it": "if_sara",
+                "pt": "pf_dora",
+                "ja": "jf_alpha",
+                "zh": "zf_xiaobei",
+                "en": "af_heart",
+            }
+            if lang_prefix in kokoro_lang_voices:
+                chosen_voice = kokoro_lang_voices[lang_prefix]
+
+        async with httpx.AsyncClient(follow_redirects=True) as client:
             response = await client.post(
                 f"{self.base_url}/v1/audio/speech",
                 json={
                     "model": "kokoro",
                     "input": text,
-                    "voice": voice or self.voice,
+                    "voice": chosen_voice,
                     "response_format": "mp3",
                 },
                 timeout=30.0,
